@@ -1,0 +1,5 @@
+share/*.zip
+share/*.jar
+clients/
+releases/
+servers/

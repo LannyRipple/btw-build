@@ -1,0 +1,8 @@
+#!/bin/bash
+
+base=$(dirname "$0")
+
+. $base/version.rc
+
+MC_JAR=btw_server-${VERSION}.jar
+exec java -server -Xmx4G -XX:+UseG1GC -jar $MC_JAR

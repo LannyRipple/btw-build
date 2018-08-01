@@ -1,0 +1,281 @@
+#!/bin/bash -eu
+
+downloads=$HOME/Downloads                # Where to find freshly downloaded BTW releases
+mc_versions=$HOME/.minecraft/versions    # Where Minecraft has its versions directory
+mcpatcher_version=5.0.3                  # Which version of MCPatcher to use
+
+base=$(cd $(dirname $0)/..; echo $PWD)   # Top level of this project.
+                                         # Can be set explicitly if desired.
+
+#
+# USAGE
+#
+#    build-btw [btw-zip-path]
+#
+# DESCRIPTION
+#
+#    This script aids in setting up a new BTW release.  It does the following
+#
+#    1. Check prerequisites and download if needed.
+#       * MCPatcher
+#       * Minecraft server 1.5.2 jar
+#    2. Determine which BTW release to install from $downloads.  (If not explicitly provided.)
+#    3. Copy release zip to releases/.
+#    4. Run MCPatcher to construct new client.  Copy new client to clients/.
+#    5a. Copy share/server-template as a new directory into servers/.
+#    5b. Creates a new server jar from minecraft_server.jar and BTW release.
+#    5c. If desired copy previous world and server.properties to new server dir.
+#    6. Ask if you want to clean up old versions, releases, clients, and servers.
+#
+# NOTES
+#
+#    * You will need a java SDK installed to get access to the `jar` utility.
+#    * You will need the jq json processor (https://stedolan.github.io/jq/) in your PATH
+#      or it can be placed in the same bin/ directory as this script and it will get used.
+#    * This script makes use of MCPatcher to handle any client modification.  Drop
+#      mods into the share/ directory for easy access.
+#    * See share/Useful-urls.txt
+#
+
+### --- No need to change things below here. ---
+
+export PATH="$PATH:$base/bin"
+
+CLIENTS=$base/clients
+RELEASES=$base/releases
+SERVERS=$base/servers
+SHARE=$base/share
+
+MC_SERVER_152=$SHARE/minecraft_server.jar
+MCPATCHER=$SHARE/HDTextureFix_v${mcpatcher_version}.jar
+
+URL_MC_SERVER_152=http://assets.minecraft.net/1_5_2/minecraft_server.jar
+URL_MCPATCHER=https://www.mcpatcher.net/download/HDTextureFix_v${mcpatcher_version}.jar
+
+unset _JAVA_OPTIONS
+
+## LIB
+
+check_prereqs() {
+    [ ! -d $CLIENTS ] && mkdir -p $CLIENTS
+    [ ! -d $RELEASES ] && mkdir -p $RELEASES
+    [ ! -d $SERVERS ] && mkdir -p $SERVERS
+
+    if [ -e $SHARE/minecraft_server.jar ]; then
+        echo "Found jar for minecraft 1.5.2 server."
+    else
+        echo "Downloading jar for minecraft 1.5.2 server."
+        ( cd $SHARE; curl -sSLo $MC_SERVER_152 $URL_MC_SERVER_152 )
+    fi
+
+    if [ -e $SHARE/HDTextureFix_v*.jar ]; then
+        echo "Found jar for MCPatcher."
+    else
+        echo "Downloading jar for MCPatcher."
+        ( cd $SHARE; curl -sSLo $MCPATCHER $URL_MCPATCHER )
+    fi
+
+    echo ""
+}
+
+assert_clean() {
+    alias=$1
+    check=0
+
+    if [ -d $mc_versions/BTW-$alias ]; then
+        echo "error: $mc_versions/BTW-$alias exists." >&2
+        check=1
+    fi
+
+    if [ -d $CLIENTS/BTW-$alias ]; then
+        echo "error: $CLIENTS/BTW-$alias exists." >&2
+        check=1
+    fi
+
+    if [ -d $SERVERS/server-$alias ]; then
+        echo "error: $SERVERS/server-$alias exists." >&2
+        check=1
+    fi
+
+    if [ $check = 1 ]; then
+        echo ""
+        read -e -p "Remove existing directories [y/N]? " YORN
+        echo ""
+        case $YORN in
+            y|Y) rm -rf $mc_versions/BTW-$alias \
+                $CLIENTS/BTW-$alias \
+                $SERVERS/server-$alias
+            ;;
+            *) exit 2 ;;
+        esac
+    fi
+}
+
+create_client() {
+    alias=$1
+
+    clientdir=$CLIENTS/BTW-$alias
+
+     echo "Starting MCPatcher.  Please save to profile \`MCPatcher\`."
+    java -jar $MCPATCHER
+
+    echo -n "Saving $clientdir... "
+    cp -r $mc_versions/1.5.2-mcpatcher $CLIENTS/BTW-$alias
+    mv $clientdir/1.5.2-mcpatcher.jar $clientdir/BTW-$alias.jar
+    echo "done."
+
+    echo -n "Editing json... "
+    cat $clientdir/1.5.2-mcpatcher.json |\
+        jq '.id = "'BTW-$alias'"' |\
+        jq 'del(.assets, .downloads, .assetIndex)' >\
+        $clientdir/BTW-$alias.json
+    rm $clientdir/1.5.2-mcpatcher.json
+    echo "done."
+
+    echo -n "Copying client to Minecraft..."
+    cp -r $clientdir $mc_versions/BTW-$alias
+    echo "done."
+}
+
+create_server() {
+    zip=$1
+    alias=$2
+
+    serverdir=$SERVERS/server-$alias
+    servername=btw_server-$alias.jar
+
+    cp -r $SHARE/server-template $serverdir
+    cp $MC_SERVER_152 $serverdir/$servername
+
+    mkdir -p $serverdir/btw
+    unzip -q -d $serverdir/btw $RELEASES/$zip
+    jar -uf $serverdir/$servername -C $serverdir/btw/MINECRAFT_SERVER-JAR .
+
+    sed -e 's/fcEnableHardcorePlayerNames=1/fcEnableHardcorePlayerNames=2/' \
+        $serverdir/btw/BTWConfig.txt > $serverdir/BTWConfig.txt
+
+    rm -rf $serverdir/btw
+
+    echo "VERSION=$alias" > $serverdir/version.rc
+
+    # remove any previous server link
+    rm -f $SERVERS/btw-previous
+
+    if [ -e $SERVERS/btw-latest ]; then
+        echo "Linking previous server as \`btw-previous\`."
+        ln -rs $SERVERS/btw-latest $SERVERS/btw-previous
+    fi
+
+    echo "Linking new server as \`btw-latest\`."
+
+    rm -f $SERVERS/btw-latest
+    ln -s $serverdir $SERVERS/btw-latest
+
+    if [ -e $SERVERS/btw-previous -a -e $SERVERS/btw-previous/world ]; then
+        echo ""
+        read -e -p "Copy previous world and server.properties? [Y/n] " YORN
+        case $YORN in
+            ""|y|Y)
+                echo cp -r $SERVERS/btw-previous/world $SERVERS/btw-latest
+                cp -r $SERVERS/btw-previous/world $SERVERS/btw-latest
+
+                echo cp $SERVERS/btw-previous/server.properties $SERVERS/btw-latest
+                cp $SERVERS/btw-previous/server.properties $SERVERS/btw-latest
+                ;;
+            *) : ;;
+        esac
+    fi
+}
+
+## MAIN
+
+check_prereqs
+
+# Maybe they gave us the btw release explicitly?
+ZIP="${1:-""}"
+
+if [ -n "$ZIP" ]; then
+    zipdir=$(dirname "$ZIP")
+    ZIP=$(basename "$ZIP")
+else
+    select ZIP in $(cd $downloads; ls *.zip); do
+        break;
+    done
+    [ -z "$ZIP" ] && exit 1
+    zipdir=$downloads
+    echo ""
+fi
+
+version=${ZIP#BTWMod}
+version=$(basename $version .zip)
+
+read -e -i $version -p "Version alias? " ALIAS
+echo "ALIAS=$ALIAS"
+echo ""
+
+assert_clean $ALIAS
+
+echo -n "Copying $ZIP to $SHARE/btw... "
+cp $zipdir/$ZIP $RELEASES
+echo "done."
+echo ""
+
+echo "Creating client..."
+create_client $ALIAS
+echo ""
+
+echo "Creating server..."
+create_server $ZIP $ALIAS
+
+echo ""
+echo "Done."
+echo ""
+
+read -e -p "Cleanup minecraft versions [y/N]? " YORN
+case $YORN in
+    y|Y)
+        select TARGET in $(cd $mc_versions; ls -d BTW-*); do
+            [ -z "$TARGET" ] && break
+            mv $mc_versions/$TARGET /tmp
+        done
+        ;;
+    *) : ;;
+esac
+echo ""
+
+read -e -p "Cleanup releases [y/N]? " YORN
+case $YORN in
+    y|Y)
+        select TARGET in $(cd $RELEASES; ls -d BTWMod*.zip); do
+            [ -z "$TARGET" ] && break
+            mv $RELEASES/$TARGET /tmp
+        done
+        ;;
+    *) : ;;
+esac
+echo ""
+
+read -e -p "Cleanup clients [y/N]? " YORN
+case $YORN in
+    y|Y)
+        select TARGET in $(cd $CLIENTS; ls -d BTW-*-Client); do
+            [ -z "$TARGET" ] && break
+            mv $CLIENTS/$TARGET /tmp
+        done
+        ;;
+    *) : ;;
+esac
+echo ""
+
+read -e -p "Cleanup servers [y/N]? " YORN
+case $YORN in
+    y|Y)
+        select TARGET in $(cd $SERVERS; ls -d server-*); do
+            [ -z "$TARGET" ] && break
+            mv $SERVERS/$TARGET /tmp
+        done
+        ;;
+    *) : ;;
+esac
+
+##__END__

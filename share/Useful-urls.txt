@@ -1,0 +1,33 @@
+Better Than Wolves Discussion
+   http://www.sargunster.com/btwforum/viewforum.php?f=3
+
+Minecraft 1.5.2 Server Jar
+   http://assets.minecraft.net/1_5_2/minecraft_server.jar
+
+MC Patcher
+   https://www.mcpatcher.net/en/hdtexturefix
+
+Legacy Skin Support Mod
+   http://www.sargunster.com/btwforum/viewtopic.php?f=12&t=9365
+
+Mesh's BTW Textures
+   http://www.sargunster.com/btwforum/viewtopic.php?f=12&t=9456
+
+   - Direct
+     http://www.meshscorner.co.uk/mctexturepack/
+
+   - JohnSmithCraftGuide:
+     http://www.minecraftforum.net/forums/mapping-and-modding-java-edition/minecraft-mods/1290952-craftguide-theme-johnsmith-inspired-v1-0
+
+CraftGuide
+   http://www.sargunster.com/btwforum/viewtopic.php?f=12&t=9452
+
+   - source
+     https://github.com/jorgebonafe/CraftGuide/tree/152-no-loader
+
+jq Json Processor
+   https://stedolan.github.io/jq/
+
+Java SDK
+   * If you don't have the `jar` command already installed.
+   http://www.oracle.com/technetwork/java/javase/downloads/index.html
