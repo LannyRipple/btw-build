@@ -1,0 +1,6 @@
+#!/bin/bash
+#XSym
+#0028
+#654872e6ec4d12cdda470ba71aba02e7
+unset _JAVA_OPTIONS
+exec $HOME/Minecraft/extras/minecraft_xray_3.6.2/minecraft_xray.sh

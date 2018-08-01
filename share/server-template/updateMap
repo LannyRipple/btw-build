@@ -1,0 +1,25 @@
+#!/bin/bash
+
+confdir=/home/lanny/Minecraft/extras/overviewer
+
+config=$confdir/config-lanny-linda.py
+
+opt_now=0
+opt_poi=0
+
+case $1 in
+    --now) opt_now=1 ;;
+    --poi) opt_poi=1 ;;
+esac
+
+if [ $opt_now = 0 ]; then
+    nice=nice
+else
+    nice=''
+fi
+
+if [ $opt_poi = 0 ]; then
+eval $nice /usr/bin/overviewer.py --config $config
+fi
+
+eval $nice /usr/bin/overviewer.py --config $config --genpoi

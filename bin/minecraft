@@ -1,0 +1,3 @@
+#!/bin/bash
+unset _JAVA_OPTIONS
+exec screen -S minecraft -dm java -Xmx1g -jar $HOME/Minecraft/extras/Minecraft.jar
