@@ -258,7 +258,7 @@ echo ""
 read -e -p "Cleanup clients [y/N]? " YORN
 case $YORN in
     y|Y)
-        select TARGET in $(cd $CLIENTS; ls -d BTW-*-Client); do
+        select TARGET in $(cd $CLIENTS; ls -d BTW-*); do
             [ -z "$TARGET" ] && break
             mv $CLIENTS/$TARGET /tmp
         done
