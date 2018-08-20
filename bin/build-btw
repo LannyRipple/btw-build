@@ -181,6 +181,9 @@ create_server() {
 
                 echo cp $SERVERS/btw-previous/server.properties $SERVERS/btw-latest
                 cp $SERVERS/btw-previous/server.properties $SERVERS/btw-latest
+
+                echo cp $SERVERS/btw-previous/ops.txt $SERVERS/btw-latest
+                cp $SERVERS/btw-previous/ops.txt $SERVERS/btw-latest
                 ;;
             *) : ;;
         esac
