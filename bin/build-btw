@@ -1,7 +1,7 @@
 #!/bin/bash -eu
 
 downloads=$HOME/Downloads                # Where to find freshly downloaded BTW releases
-mc_versions=$HOME/.minecraft/versions    # Where Minecraft has its versions directory
+mc_dir=$HOME/.minecraft                   # The minecraft base directory
 mcpatcher_version=5.0.3                  # Which version of MCPatcher to use
 
 base=$(cd $(dirname $0)/..; echo $PWD)   # Top level of this project.
@@ -40,6 +40,10 @@ base=$(cd $(dirname $0)/..; echo $PWD)   # Top level of this project.
 ### --- No need to change things below here. ---
 
 export PATH="$PATH:$base/bin"
+
+mc_versions=$mc_dir/versions
+mc_legacy_assets=$mc_dir/assets/virtual/legacy
+mc_resources=$mc_dir/resources
 
 CLIENTS=$base/clients
 RELEASES=$base/releases
@@ -111,13 +115,38 @@ assert_clean() {
     fi
 }
 
+legacy_resources() {
+    if [ ! -e $mc_resources/music/calm1.ogg ]; then
+        echo "Looks like no legacy sound [MCL-6280]."
+
+        echo "Copying music..."
+        cp $mc_legacy_assets/music/calm* $mc_resources/music
+        cp $mc_legacy_assets/music/[d-z]* $mc_resources/newmusic
+
+        echo "Copying sounds..."
+        cp -r $mc_legacy_assets/sounds/* $mc_resources/sound3
+        echo "done."
+    fi
+}
+
 create_client() {
     alias=$1
 
     clientdir=$CLIENTS/BTW-$alias
 
+    # Recent launcher changes launcher_profiles.json which current MCPatcher
+    # doesn't understand.  We'll copy in something that works and restore
+    # the original after.
+    launch_profs=$mc_dir/launcher_profiles.json
+
+    cp $launch_profs $launch_profs.ORIG
+    cp $SHARE/mcpatcher/launcher_profiles.json $launch_profs
+
      echo "Starting MCPatcher.  Please save to profile \`MCPatcher\`."
     java -jar $MCPATCHER
+
+    # restore launcher_profiles.json
+    mv $launch_profs.ORIG $launch_profs
 
     echo -n "Saving $clientdir... "
     cp -r $mc_versions/1.5.2-mcpatcher $CLIENTS/BTW-$alias
@@ -221,6 +250,10 @@ assert_clean $ALIAS
 echo -n "Copying $ZIP to $SHARE/btw... "
 cp $zipdir/$ZIP $RELEASES
 echo "done."
+echo ""
+
+echo "Checking for MCL-6280..."
+legacy_resources
 echo ""
 
 echo "Creating client..."
