@@ -156,7 +156,7 @@ create_client() {
     echo -n "Editing json... "
     cat $clientdir/1.5.2-mcpatcher.json |\
         jq '.id = "'BTW-$alias'"' |\
-        jq 'del(.assets, .downloads, .assetIndex)' >\
+        jq 'del(.downloads)' >\
         $clientdir/BTW-$alias.json
     rm $clientdir/1.5.2-mcpatcher.json
     echo "done."
