@@ -272,7 +272,7 @@ case $YORN in
     y|Y)
         select TARGET in $(cd $mc_versions; ls -d BTW-*); do
             [ -z "$TARGET" ] && break
-            mv $mc_versions/$TARGET /tmp
+            mv $mc_versions/$TARGET /tmp/version-$TARGET
         done
         ;;
     *) : ;;
@@ -284,7 +284,7 @@ case $YORN in
     y|Y)
         select TARGET in $(cd $RELEASES; ls -d BTWMod*.zip); do
             [ -z "$TARGET" ] && break
-            mv $RELEASES/$TARGET /tmp
+            mv $RELEASES/$TARGET /tmp/release-$TARGET
         done
         ;;
     *) : ;;
@@ -296,7 +296,7 @@ case $YORN in
     y|Y)
         select TARGET in $(cd $CLIENTS; ls -d BTW-*); do
             [ -z "$TARGET" ] && break
-            mv $CLIENTS/$TARGET /tmp
+            mv $CLIENTS/$TARGET /tmp/client-$TARGET
         done
         ;;
     *) : ;;
@@ -308,7 +308,7 @@ case $YORN in
     y|Y)
         select TARGET in $(cd $SERVERS; ls -d server-*); do
             [ -z "$TARGET" ] && break
-            mv $SERVERS/$TARGET /tmp
+            mv $SERVERS/$TARGET /tmp/server-$TARGET
         done
         ;;
     *) : ;;
