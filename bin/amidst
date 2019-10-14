@@ -1,0 +1,4 @@
+#!/bin/bash
+base=$(dirname "$(readlink -f "$0")")
+export _JAVA_OPTIONS=
+exec java -jar $base/share/amidst-v4-3.jar

@@ -115,20 +115,6 @@ assert_clean() {
     fi
 }
 
-legacy_resources() {
-    if [ ! -e $mc_resources/music/calm1.ogg ]; then
-        echo "Looks like no legacy sound [MCL-6280]."
-
-        echo "Copying music..."
-        cp $mc_legacy_assets/music/calm* $mc_resources/music
-        cp $mc_legacy_assets/music/[d-z]* $mc_resources/newmusic
-
-        echo "Copying sounds..."
-        cp -r $mc_legacy_assets/sounds/* $mc_resources/sound3
-        echo "done."
-    fi
-}
-
 create_client() {
     alias=$1
 
@@ -241,7 +227,10 @@ fi
 version=${ZIP#BTWMod}
 version=$(basename $version .zip)
 
-read -e -i $version -p "Version alias? " ALIAS
+read -e -p "Version alias? [blank for default] " ALIAS
+if [ -z "$ALIAS" ]; then
+    ALIAS=$version
+fi
 echo "ALIAS=$ALIAS"
 echo ""
 
@@ -250,10 +239,6 @@ assert_clean $ALIAS
 echo -n "Copying $ZIP to $SHARE/btw... "
 cp $zipdir/$ZIP $RELEASES
 echo "done."
-echo ""
-
-echo "Checking for MCL-6280..."
-legacy_resources
 echo ""
 
 echo "Creating client..."
