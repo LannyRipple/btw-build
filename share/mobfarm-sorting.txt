@@ -1,0 +1,22 @@
+section 1
+    H slats     nitre
+    L slats     string/scroll
+
+section 2
+    H grate     spider eye, slimeballs, venom sacs
+    L grate     witch wart, creeper oyesters
+    L trapdoor  arrows, bones
+
+section 3
+    H bars      potions
+    L bars      flesh, bottles
+    L ladder    bows
+
+section 4
+    H ladder    iron
+
+Water runs for 8.  First has undertow.  Do not put a
+hopper there.  Next three are H (hoppers will collect
+items that sink).  Next three are L (hoppers will
+collect items that float).  Final will be start of
+next sorting section.
