@@ -10,10 +10,11 @@ section 2
 section 3
     H bars      potions
     L bars      flesh, bottles
-    L ladder    bows
+    L bars      overflow
 
 section 4
     H ladder    iron
+    L ladder    bows
 
 Water runs for 8.  First has undertow.  Do not put a
 hopper there.  Next three are H (hoppers will collect
