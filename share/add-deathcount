@@ -1,0 +1,26 @@
+These commands will set up displaying the number
+of deaths the player's have experienced when
+showing the Tab list.
+
+First define the objective:
+
+  /scoreboard objectives add Deaths deathCount
+
+Set players' known deathCount (if needed):
+
+  /scoreboard players set PlayerName Deaths 3
+
+PlayerName's deathCount will auto increment when
+they die.
+
+Set `Deaths` for display using command:
+
+  /scoreboard objectives setdisplay list Deaths
+
+You can use various displays.
+
+  list      - player list when holding Tab
+  sidebar   - to right of all player's screen
+  belowName - as `sidebar` but under name
+
+__END__
